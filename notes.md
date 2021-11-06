@@ -194,7 +194,7 @@
     - the `other` pattern is like the `default` pattern in javascript
 
       ```rust
-      n = 10;
+      let n = 10;
       println!(
         match n {
           3 => 1,
@@ -209,7 +209,7 @@
     - the `_` pattern is like the `other` pattern but it doesn't bind the value
 
       ```rust
-      n = 10;
+      let n = 10;
       println!(
         match n {
           3 => 1,
@@ -262,3 +262,98 @@
         println!("number (32bit) {}!", amount);
       }
       ```
+  
+  - `while let` is similar to `if let` but it loops until the pattern matches
+
+  - `Vec<T>` (aka vectors) is a collection type or list
+    - in rust like most other languages, the first element in a list is at index 0
+    - `Vec` is simply a growable array
+
+    - create an empty vector
+
+      ```rust
+      let v: Vec<i32> = Vec::new();
+      ```
+
+    - create a vector with some values
+
+      ```rust
+      let v = vec![1, 2, 3];
+      ```
+
+    - create a vector and add values dynamically
+
+      ```rust
+      let mut v = Vec::new();
+      v.push(1);
+      v.push(2);
+      v.push(3);
+      ```
+
+    - get an item from a vector
+
+      ```rust
+      let v = vec![1, 2, 3];
+      let third: &i32 = &v[2];
+      ```
+
+    - iterate over a vector
+
+      ```rust
+      let v = vec![100, 32, 57];
+      for i in &v {
+        println!("{}", i);
+      }
+      ```
+
+    - get an item that might not exist from a vector
+
+      ```rust
+      let v = vec![100, 32, 57];
+      let does_not_exist = &v[100];
+      ```
+
+      - this will cause an error
+
+      - instead use a `get` method
+
+        ```rust
+          let v = vec![100, 32, 57];
+          let does_not_exist = v.get(100);
+        ```
+
+    - iterate over a vector and mutate the values
+
+      ```rust
+      let mut v = vec![100, 32, 57];
+      for i in &mut v {
+        *i += 50;
+      }
+      ```
+
+    - storing multiple values with enums
+
+        ```rust
+        enum SpreadsheetCell {
+          Int(i32),
+          Float(f64),
+          Text(String),
+        }
+
+        let row = vec![
+          SpreadsheetCell::Int(3),
+          SpreadsheetCell::Text(String::from("blue")),
+          SpreadsheetCell::Float(10.12),
+        ];
+        ```
+
+    - create a vector and remove values dynamically
+
+      ```rust
+      let mut v = Vec![0, 1, 2, 3, 4, 5];
+      v.pop();
+      v.pop();
+      v.pop();
+      ```
+
+      - `pop` also returns the value that was removed
