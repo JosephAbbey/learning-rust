@@ -16,4 +16,5 @@ Cargo.lock
 # rust-wasm https://github.com/rustwasm/wasm-pack-template/blob/master/.gitignore
 bin/
 pkg/
+www/
 wasm-pack.log
