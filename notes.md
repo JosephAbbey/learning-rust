@@ -220,3 +220,45 @@
       ```
 
       - here `7` is printed
+  - `if let` combines `if` and `let`
+    - e.g. it simplifies the following code
+
+      ```rust
+      let some_option = Some(3);
+      match some_option {
+        Some(amount) => println!("number {}!", amount),
+        _ => (),
+      }
+      ```
+
+      to
+
+      ```rust
+      let some_option = Some(3);
+      if let Some(amount) = some_option {
+        println!("number {}!", amount);
+      }
+      ```
+
+    - `if let` can also be used to match on multiple values
+      - e.g.
+
+      ```rust
+      let some_option = Some(3u8);
+      match some_option {
+        Some<u8>(amount) => println!("number (8bit) {}!", amount),
+        Some<u32>(amount) => println!("number (32bit) {}!", amount),
+        _ => (),
+      }
+      ```
+
+      to
+
+      ```rust
+      let some_option = Some(3);
+      if let Some<u8>(amount) = some_option {
+        println!("number (8bit) {}!", amount);
+      } else if let Some<u32>(amount) = some_option {
+        println!("number (32bit) {}!", amount);
+      }
+      ```
