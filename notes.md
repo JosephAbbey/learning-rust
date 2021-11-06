@@ -525,20 +525,20 @@ Pretty much a summary of <https://doc.rust-lang.org/book/>.
       use std::io::ErrorKind;
 
       fn main() {
-          let f = File::open("hello.txt");
+        let f = File::open("hello.txt");
 
-          let f = match f {
-              Ok(file) => file,
-              Err(error) => match error.kind() {
-                  ErrorKind::NotFound => match File::create("hello.txt") {
-                      Ok(fc) => fc,
-                      Err(e) => panic!("Problem creating the file: {:?}", e),
-                  },
-                  other_error => {
-                      panic!("Problem opening the file: {:?}", other_error)
-                  }
-              },
-          };
+        let f = match f {
+          Ok(file) => file,
+          Err(error) => match error.kind() {
+            ErrorKind::NotFound => match File::create("hello.txt") {
+              Ok(fc) => fc,
+              Err(e) => panic!("Problem creating the file: {:?}", e),
+            },
+            other_error => {
+              panic!("Problem opening the file: {:?}", other_error)
+            }
+          },
+        };
       }
       ```
 
@@ -548,7 +548,7 @@ Pretty much a summary of <https://doc.rust-lang.org/book/>.
       use std::fs::File;
 
       fn main() {
-          let f = File::open("hello.txt").expect("Failed to open hello.txt");
+        let f = File::open("hello.txt").expect("Failed to open hello.txt");
       }
       ```
 
@@ -559,19 +559,19 @@ Pretty much a summary of <https://doc.rust-lang.org/book/>.
       use std::io::{self, Read};
 
       fn read_username_from_file() -> Result<String, io::Error> {
-          let f = File::open("hello.txt");
+        let f = File::open("hello.txt");
 
-          let mut f = match f {
-              Ok(file) => file,
-              Err(e) => return Err(e),
-          };
+        let mut f = match f {
+          Ok(file) => file,
+          Err(e) => return Err(e),
+        };
 
-          let mut s = String::new();
+        let mut s = String::new();
 
-          match f.read_to_string(&mut s) {
-              Ok(_) => Ok(s),
-              Err(e) => Err(e),
-          }
+        match f.read_to_string(&mut s) {
+          Ok(_) => Ok(s),
+          Err(e) => Err(e),
+        }
       }
       ```
 
@@ -582,10 +582,10 @@ Pretty much a summary of <https://doc.rust-lang.org/book/>.
       use std::io::{self, Read};
 
       fn read_username_from_file() -> Result<String, io::Error> {
-          let mut f = File::open("hello.txt")?;
-          let mut s = String::new();
-          f.read_to_string(&mut s)?;
-          Ok(s)
+        let mut f = File::open("hello.txt")?;
+        let mut s = String::new();
+        f.read_to_string(&mut s)?;
+        Ok(s)
       }
       ```
 
@@ -596,9 +596,9 @@ Pretty much a summary of <https://doc.rust-lang.org/book/>.
       use std::io::{self, Read};
 
       fn read_username_from_file() -> Result<String, io::Error> {
-          let mut s = String::new();
-          File::open("hello.txt")?.read_to_string(&mut s)?;
-          Ok(s)
+        let mut s = String::new();
+        File::open("hello.txt")?.read_to_string(&mut s)?;
+        Ok(s)
       }
       ```
 
@@ -611,10 +611,10 @@ Pretty much a summary of <https://doc.rust-lang.org/book/>.
         use std::io::{self, Read};
 
         fn main() {
-            for line in File::open("hello.txt")?.lines() {
-                let line = line?;
-                println!("{}", line);
-            }
+          for line in File::open("hello.txt")?.lines() {
+            let line = line?;
+            println!("{}", line);
+          }
         }
         ```
 
@@ -625,13 +625,13 @@ Pretty much a summary of <https://doc.rust-lang.org/book/>.
         use std::io::{self, Read};
 
         fn main() {
-            let mut f = File::open("hello.txt")?;
+          let mut f = File::open("hello.txt")?;
 
-            let mut buffer = String::new();
-            while f.read_to_string(&mut buffer)? > 0 {
-                println!("{}", buffer);
-                buffer.clear();
-            }
+          let mut buffer = String::new();
+          while f.read_to_string(&mut buffer)? > 0 {
+            println!("{}", buffer);
+            buffer.clear();
+          }
         }
         ```
 
@@ -642,13 +642,13 @@ Pretty much a summary of <https://doc.rust-lang.org/book/>.
         use std::io::{self, Read};
 
         fn main() {
-            let f = File::open("hello.txt")?;
+          let f = File::open("hello.txt")?;
 
-            let mut buffer = String::new();
-            match f.read_to_string(&mut buffer) {
-                Ok(_) => println!("{}", buffer),
-                Err(e) => println!("Error: {}", e),
-            }
+          let mut buffer = String::new();
+          match f.read_to_string(&mut buffer) {
+            Ok(_) => println!("{}", buffer),
+            Err(e) => println!("Error: {}", e),
+          }
         }
         ```
 
@@ -659,11 +659,11 @@ Pretty much a summary of <https://doc.rust-lang.org/book/>.
         use std::io::{self, Read};
 
         fn main() {
-            let f = File::open("hello.txt")?;
+          let f = File::open("hello.txt")?;
 
-            let mut buffer = String::new();
-            f.read_to_string(&mut buffer)?;
-            println!("{}", buffer);
+          let mut buffer = String::new();
+          f.read_to_string(&mut buffer)?;
+          println!("{}", buffer);
         }
         ```
 
@@ -674,8 +674,70 @@ Pretty much a summary of <https://doc.rust-lang.org/book/>.
         use std::fs::File;
 
         fn main() -> Result<(), Box<dyn Error>> {
-            let f = File::open("hello.txt")?;
+          let f = File::open("hello.txt")?;
 
-            Ok(())
+          Ok(())
         }
         ```
+
+  - `trait` can be used to make a list of functions an object must have, this is a bit similar to inheritance in javascript
+    - this makes it so that we can have a group of different types that can be used under  the same name
+    - `impl` can be used to implement a trait for an object
+
+      ```rust
+      trait Draw {
+        fn draw(&self);
+      }
+
+      struct Button {
+        // ...
+      }
+
+      impl Draw for Button {
+        fn draw(&self) {
+          // ...
+        }
+      }
+
+      struct Paragraph {
+        // ...
+      }
+
+      impl Draw for Paragraph {
+        fn draw(&self) {
+          // ...
+        }
+      }
+      ```
+
+      this is pretty much equivalent to
+
+      ```javascript
+      class Draw {
+        draw() {}
+      }
+
+      class Button extends Draw {
+        // ...
+      }
+
+      class Paragraph extends Draw {
+        // ...
+      }
+      ```
+
+    - so long as a type implements the trait it can be used under the trait as its type name
+
+      ```rust
+      pub struct Screen {
+        pub components: Vec<Box<dyn Draw>>,
+      }
+
+      impl Screen {
+        pub fn run(&self) {
+          for component in self.components.iter() {
+            component.draw();
+          }
+        }
+      }
+      ```
