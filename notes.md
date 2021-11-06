@@ -1011,3 +1011,14 @@ Pretty much a summary of <https://doc.rust-lang.org/book/>.
           }
         }
         ```
+
+- to import a local module first use the mod key word followed by the name of the module
+
+  ```rust
+    mod my_mod;
+    use my_mod::hello;
+  ```
+
+- `std::env` includes the `args` function to get the args and the `var` function to get an environment variable
+
+- `eprintln!` and `eprint!` are macros that print to stderr
