@@ -680,7 +680,7 @@ Pretty much a summary of <https://doc.rust-lang.org/book/>.
         }
         ```
 
-  - `trait` can be used to make a list of functions an object must have, this is a bit similar to inheritance in javascript
+  - `trait` can be used to make a list of functions an object must have, this is a bit similar to inheritance in javascript [example](/object_oriented_gui)
     - this makes it so that we can have a group of different types that can be used under  the same name
     - `impl` can be used to implement a trait for an object
 
@@ -690,7 +690,9 @@ Pretty much a summary of <https://doc.rust-lang.org/book/>.
       }
 
       struct Button {
-        // ...
+        width: u32,
+        height: u32,
+        label: String,
       }
 
       impl Draw for Button {
@@ -700,7 +702,9 @@ Pretty much a summary of <https://doc.rust-lang.org/book/>.
       }
 
       struct Paragraph {
-        // ...
+        width: u32,
+        height: u32,
+        text: String,
       }
 
       impl Draw for Paragraph {
@@ -710,7 +714,7 @@ Pretty much a summary of <https://doc.rust-lang.org/book/>.
       }
       ```
 
-      this is pretty much equivalent to
+      this is pretty much equivalent to the following javascript
 
       ```javascript
       class Draw {
@@ -718,11 +722,27 @@ Pretty much a summary of <https://doc.rust-lang.org/book/>.
       }
 
       class Button extends Draw {
-        // ...
+        constructor(width, height, label) {
+          this.width = width;
+          this.height = height;
+          this.label = label;
+        }
+
+        draw() {
+          // ...
+        }
       }
 
       class Paragraph extends Draw {
-        // ...
+        constructor(width, height, text) {
+          this.width = width;
+          this.height = height;
+          this.text = text;
+        }
+
+        draw() {
+          // ...
+        }
       }
       ```
 
@@ -740,4 +760,22 @@ Pretty much a summary of <https://doc.rust-lang.org/book/>.
           }
         }
       }
+
+      // as you can see the Paragraph and Button types can be used under the Draw trait
+      let screen = Screen {
+        components: vec![
+          Box::new(Paragraph {
+            width: 75,
+            height: 10,
+            text: String::from("Hello World!"),
+          }),
+          Box::new(Button {
+            width: 50,
+            height: 10,
+            label: String::from("OK"),
+          }),
+        ],
+      };
+
+      screen.run();
       ```
