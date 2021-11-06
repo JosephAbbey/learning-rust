@@ -357,3 +357,116 @@
       ```
 
       - `pop` also returns the value that was removed
+
+  - `HashMap<K, V>` is like an object in javascript (it stores key-value pairs)
+    - `HashMap` is a collection type
+    - you must always import `HashMap` before using it
+
+      ```rust
+      use std::collections::HashMap;
+      ```
+
+    - create an empty hashmap
+
+      ```rust
+      let mut scores = HashMap::new();
+
+      println!("{:?}", scores);
+      ```
+
+    - create a hashmap with some values
+
+      ```rust
+      let mut scores = HashMap::new();
+      scores.insert(String::from("Blue"), 10);
+      scores.insert(String::from("Yellow"), 50);
+
+      println!("{:?}", scores);
+      ```
+
+    - create a `HashMap` from iterables
+
+      ```rust
+      let teams = vec![String::from("Blue"), String::from("Yellow")];
+      let initial_scores = vec![10, 50];
+
+      let mut scores: HashMap<_, _> =
+          teams.into_iter().zip(initial_scores.into_iter()).collect();
+
+      println!("{:?}", scores);
+      ```
+
+    - get a value from a hashmap
+
+      ```rust
+      let mut scores = HashMap::new();
+      scores.insert(String::from("Blue"), 10);
+
+      let team_name = String::from("Blue");
+      let score = scores.get(&team_name);
+
+      println!("{}", score);
+      ```
+
+    - iterate over a hashmap
+
+      ```rust
+      let mut scores = HashMap::new();
+      scores.insert(String::from("Blue"), 10);
+      scores.insert(String::from("Yellow"), 50);
+
+      for (key, value) in &scores {
+        println!("{}: {}", key, value);
+      }
+
+      println!("{:?}", scores);
+      ```
+
+    - iterate over a hashmap and mutate the values
+
+      ```rust
+      let mut scores = HashMap::new();
+      scores.insert(String::from("Blue"), 10);
+      scores.insert(String::from("Yellow"), 50);
+
+      for (key, value) in &mut scores {
+        *value += 10;
+      }
+
+      println!("{:?}", scores);
+      ```
+
+    - overwrite a value in a hashmap
+
+      ```rust
+      let mut scores = HashMap::new();
+      scores.insert(String::from("Blue"), 10);
+      scores.insert(String::from("Yellow"), 50);
+
+      println!("{:?}", scores);
+      ```
+
+    - only insert a value if the key does not already exist
+
+      ```rust
+      let mut scores = HashMap::new();
+      scores.insert(String::from("Blue"), 10);
+      scores.entry(String::from("Yellow")).or_insert(50);
+      scores.entry(String::from("Blue")).or_insert(50);
+
+      println!("{:?}", scores);
+      ```
+
+    - update a value based on the old value
+
+      ```rust
+      let text = "hello world wonderful world";
+      let mut map = HashMap::new();
+
+      for word in text.split_whitespace() {
+        let count = map.entry(word).or_insert(0);
+        *count += 1;
+      }
+
+      println!("{:?}", map);
+      ```
