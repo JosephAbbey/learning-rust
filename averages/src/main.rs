@@ -5,13 +5,13 @@ fn mean(nums: Vec<u32>) -> u32 {
     for num in nums.clone() {
         sum += num;
     }
-    return sum / nums.len() as u32;
+    sum / nums.len() as u32
 }
 
 fn median(nums: Vec<u32>) -> u32 {
     let mut numsmut = nums.clone();
     numsmut.sort();
-    return numsmut[(numsmut.len() / 2)] as u32;
+    numsmut[(numsmut.len() / 2)] as u32
 }
 
 fn mode(nums: Vec<u32>) -> u32 {
@@ -26,7 +26,7 @@ fn mode(nums: Vec<u32>) -> u32 {
             return key;
         }
     }
-    return 0;
+    0
 }
 
 fn main() {

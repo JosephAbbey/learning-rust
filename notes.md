@@ -1,5 +1,7 @@
 # Rust Notes
 
+Pretty much a summary of <https://doc.rust-lang.org/book/>.
+
 - functional programming language
   - `main.main` (main.rs) is the main function
 - print with `println!` and `print!` functions
@@ -470,3 +472,210 @@
 
       println!("{:?}", map);
       ```
+
+  - `panic!` throws an exception and stops the program
+
+    ```rust
+    panic!("crash and burn");
+    ```
+
+  - `Result<T, E>` is the type used if something can be an error or a value
+
+    ```rust
+    enum Result<T, E> {
+      Ok(T),
+      Err(E),
+    }
+    ```
+
+    - `Ok` is a successful result
+
+      ```rust
+      let x = Ok(5);
+      ```
+
+    - `Err` is an error result
+
+      ```rust
+      let x: Result<i32, &str> = Err("Error");
+      ```
+
+    - `Result<T, E>` is included in the standard library
+    - `match` statements are used to handle results
+
+      ```rust
+      let x = Ok(5);
+      let y = Err("Error");
+
+      match x {
+        Ok(val) => println!("success {}", val),
+        Err(e) => println!("error {}", e),
+      }
+
+      match y {
+        Ok(val) => println!("success {}", val),
+        Err(e) => println!("error {}", e),
+      }
+      ```
+
+    - match on different errors
+
+      ```rust
+      use std::fs::File;
+      use std::io::ErrorKind;
+
+      fn main() {
+          let f = File::open("hello.txt");
+
+          let f = match f {
+              Ok(file) => file,
+              Err(error) => match error.kind() {
+                  ErrorKind::NotFound => match File::create("hello.txt") {
+                      Ok(fc) => fc,
+                      Err(e) => panic!("Problem creating the file: {:?}", e),
+                  },
+                  other_error => {
+                      panic!("Problem opening the file: {:?}", other_error)
+                  }
+              },
+          };
+      }
+      ```
+
+    - the `expect` function is used to handle errors
+
+      ```rust
+      use std::fs::File;
+
+      fn main() {
+          let f = File::open("hello.txt").expect("Failed to open hello.txt");
+      }
+      ```
+
+    - Propagate errors
+
+      ```rust
+      use std::fs::File;
+      use std::io::{self, Read};
+
+      fn read_username_from_file() -> Result<String, io::Error> {
+          let f = File::open("hello.txt");
+
+          let mut f = match f {
+              Ok(file) => file,
+              Err(e) => return Err(e),
+          };
+
+          let mut s = String::new();
+
+          match f.read_to_string(&mut s) {
+              Ok(_) => Ok(s),
+              Err(e) => Err(e),
+          }
+      }
+      ```
+
+    - Propagate errors with `?` (this does the same as above)
+
+      ```rust
+      use std::fs::File;
+      use std::io::{self, Read};
+
+      fn read_username_from_file() -> Result<String, io::Error> {
+          let mut f = File::open("hello.txt")?;
+          let mut s = String::new();
+          f.read_to_string(&mut s)?;
+          Ok(s)
+      }
+      ```
+
+      or even shorter
+
+      ```rust
+      use std::fs::File;
+      use std::io::{self, Read};
+
+      fn read_username_from_file() -> Result<String, io::Error> {
+          let mut s = String::new();
+          File::open("hello.txt")?.read_to_string(&mut s)?;
+          Ok(s)
+      }
+      ```
+
+      - `?` can only be used if the return type is `Result`, `Option` or another type that implements `std::ops::Try`
+
+      - `?` can be used in a `for` loop
+
+        ```rust
+        use std::fs::File;
+        use std::io::{self, Read};
+
+        fn main() {
+            for line in File::open("hello.txt")?.lines() {
+                let line = line?;
+                println!("{}", line);
+            }
+        }
+        ```
+
+      - `?` can be used in a `while` loop
+
+        ```rust
+        use std::fs::File;
+        use std::io::{self, Read};
+
+        fn main() {
+            let mut f = File::open("hello.txt")?;
+
+            let mut buffer = String::new();
+            while f.read_to_string(&mut buffer)? > 0 {
+                println!("{}", buffer);
+                buffer.clear();
+            }
+        }
+        ```
+
+      - `?` can be used in a `match` statement
+
+        ```rust
+        use std::fs::File;
+        use std::io::{self, Read};
+
+        fn main() {
+            let f = File::open("hello.txt")?;
+
+            let mut buffer = String::new();
+            match f.read_to_string(&mut buffer) {
+                Ok(_) => println!("{}", buffer),
+                Err(e) => println!("Error: {}", e),
+            }
+        }
+        ```
+
+      - `?` can be used in a `let` statement
+
+        ```rust
+        use std::fs::File;
+        use std::io::{self, Read};
+
+        fn main() {
+            let f = File::open("hello.txt")?;
+
+            let mut buffer = String::new();
+            f.read_to_string(&mut buffer)?;
+            println!("{}", buffer);
+        }
+        ```
+
+      - the main function can be given another return type to get around this
+
+        ```rust
+        use std::error::Error;
+        use std::fs::File;
+
+        fn main() -> Result<(), Box<dyn Error>> {
+            let f = File::open("hello.txt")?;
+
+            Ok(())
+        }
+        ```
