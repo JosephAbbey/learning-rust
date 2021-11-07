@@ -1022,3 +1022,114 @@ Pretty much a summary of <https://doc.rust-lang.org/book/>.
 - `std::env` includes the `args` function to get the args and the `var` function to get an environment variable
 
 - `eprintln!` and `eprint!` are macros that print to stderr
+
+- templates can be used to make code run with multiple types
+
+  - `struct`
+
+    ```rust
+    struct Message<T> {
+      content: T,
+      from: String,
+      to: String,
+    }
+
+    fn main() {
+      let x = Message::<String> {
+        content: "hello".to_string(),
+        from: "Boris".to_string(),
+        to: "Joe".to_string(),
+      };
+      let y = Message::<u32> {
+        content: 123u32,
+        from: "Joe".to_string(),
+        to: "Boris".to_string(),
+      };
+    }
+    ```
+
+  - `fn`
+
+    ```rust
+    fn largest<T: std::cmp::PartialOrd>(list: &[T]) -> &T {
+      let mut largest = &list[0];
+
+      for item in list.clone() {
+        if &item > &largest {
+          largest = &item;
+        }
+      }
+
+      largest
+    }
+
+    fn main() {
+      let number_list = vec![34, 50, 25, 100, 65];
+
+      let result = largest(&number_list);
+      println!("The largest number is {}", result);
+
+      let char_list = vec!['y', 'm', 'a', 'q'];
+
+      let result = largest(&char_list);
+      println!("The largest char is {}", result);
+    }
+    ```
+
+    - using `+`
+
+      ```rust
+      fn largest<T: PartialOrd + Copy>(list: &[T]) -> T {
+        let mut largest = list[0];
+
+        for &item in list {
+          if item > largest {
+            largest = item;
+          }
+        }
+
+        largest
+      }
+
+      fn main() {
+        let number_list = vec![34, 50, 25, 100, 65];
+
+        let result = largest(&number_list);
+        println!("The largest number is {}", result);
+
+        let char_list = vec!['y', 'm', 'a', 'q'];
+
+        let result = largest(&char_list);
+        println!("The largest char is {}", result);
+      }
+      ```
+
+  - `enum`
+
+    ```rust
+    enum Result<T, E> {
+      Ok(T),
+      Err(E),
+    }
+    ```
+
+  - `impl`
+
+    ```rust
+    struct Point<T> {
+      x: T,
+      y: T,
+    }
+
+    impl<T> Point<T> {
+      fn x(&self) -> &T {
+        &self.x
+      }
+    }
+
+    fn main() {
+      let p = Point { x: 5, y: 10 };
+
+      println!("p.x = {}", p.x());
+    }
+    ```
