@@ -63,6 +63,7 @@ Pretty much a summary of <https://doc.rust-lang.org/book/>.
       DownLeft(i32, i32),
       DownRight(i32, i32),
     }
+    ```
 
   - enums can also have multiple named types associated with themselves
 
@@ -350,7 +351,7 @@ Pretty much a summary of <https://doc.rust-lang.org/book/>.
   - create a vector and remove values dynamically
 
     ```rust
-    let mut v = Vec![0, 1, 2, 3, 4, 5];
+    let mut v = vec![0, 1, 2, 3, 4, 5];
     v.pop();
     v.pop();
     v.pop();
@@ -906,6 +907,7 @@ Pretty much a summary of <https://doc.rust-lang.org/book/>.
           let handle = thread::spawn(move || {
             println!("Here's a vector: {:?}", v);
           });
+          drop(v);
           handle.join().unwrap();
         }
         ```
@@ -918,21 +920,15 @@ Pretty much a summary of <https://doc.rust-lang.org/book/>.
       use std::thread;
 
       fn main() {
-        let m = mpsc::channel();
-        let s = mpsc::channel();
+        let (tx, rx) = mpsc::channel();
 
         let spawned = thread::spawn(move || {
-          let val = String::from("ping");
-          m.0.send(val).unwrap();
-          let received = s.1.recv().unwrap();
-          println!("Got: {}", received);
+          tx.send(String::from("hello")).unwrap();
         });
 
-        let received = m.1.recv().unwrap();
+        let received = rx.recv().unwrap();
         println!("Got: {}", received);
-        let val = String::from("pong");
-        s.0.send(val).unwrap();
-        
+
         spawned.join().unwrap();
       }
       ```
