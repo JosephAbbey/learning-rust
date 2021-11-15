@@ -1,6 +1,7 @@
 use std::env;
 use std::process;
 
+// import the minigrep code
 mod lib;
 use lib::{run, Config};
 

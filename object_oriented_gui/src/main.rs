@@ -1,6 +1,7 @@
 mod gui;
 use gui::{Button, Draw, Screen};
 
+// a struct to hold a select box
 struct SelectBox {
     width: u32,
     height: u32,
@@ -8,6 +9,7 @@ struct SelectBox {
 }
 
 impl Draw for SelectBox {
+    // implementation of the Draw trait
     fn draw(&self) {
         println!(
             "SelectBox {}, {}, has {} options.",
