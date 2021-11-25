@@ -10,11 +10,13 @@ fn indent(size: i8) -> String {
 }
 
 pub fn rsx(input: String) -> String {
+  // regular expression to find some XML
   let re = Regex::new(r#"([[:blank:]]*)(?<tag>(<(?<tag_name>\w+)(\s+\w+(=\".*\")?)*\s*>[^<]*((?&tag)[^<]*)*<\/\k<tag_name>>)|(<(\w+)(\s+\w+(=\".*\")?)*\s*\/>))"#).unwrap();
 
   let mut output = input.clone();
   let mut offset = 0isize;
   for result in re.captures_iter(input.as_bytes()) {
+    // split the match into it's components
     let m = result.unwrap();
     let i = String::from_utf8_lossy(m.get(1).unwrap().as_bytes());
     let m = m.get(0).unwrap();
@@ -23,10 +25,12 @@ pub fn rsx(input: String) -> String {
     let m = String::from_utf8_lossy(m.as_bytes());
     // println!("{}, {}, {}", m, a, b);
     let mut out = String::new();
+    // create an XML reader from the input
     let parser = EventReader::from_str(&m);
     let mut depth = 0i8;
     for e in parser {
       match e {
+        // on opening tag, indent and add the iced code
         Ok(XmlEvent::StartElement {
           name, attributes, ..
         }) => {
@@ -60,6 +64,7 @@ pub fn rsx(input: String) -> String {
             depth += 2;
           }
         }
+        // on closing tag, dedent
         Ok(XmlEvent::EndElement { .. }) => {
           depth -= 2;
           if depth < 0 {
@@ -71,6 +76,7 @@ pub fn rsx(input: String) -> String {
             out.push_str(&format!("{}{})\n", i, indent(depth)));
           }
         }
+        // on text, add iced code
         Ok(XmlEvent::Characters(chars)) => {
           if chars.chars().next().unwrap().to_string() == "{"
             && chars.chars().last().unwrap().to_string() == "}"
