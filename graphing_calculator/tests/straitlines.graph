@@ -1,5 +1,5 @@
 # y = mx + c; @draw
-y = 3x;     @draw
-y = 2x + 1; @draw
-y = 3;      @draw
-x = 3y;     @draw
+y = 3x;       @draw
+y = 2x + 1;   @draw
+y = 3;        @draw
+x = 3y;       @draw

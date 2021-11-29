@@ -23,7 +23,7 @@ pub enum TokenKind {
 
 // struct to hold ths human readable components of a position in the source code
 #[derive(PartialEq, Debug, Clone)]
-struct HumanPosition {
+pub struct HumanPosition {
   pub line: usize,
   pub column: usize,
 }
@@ -31,7 +31,7 @@ struct HumanPosition {
 // struct to hold a position in the source code
 #[derive(PartialEq, Debug, Clone)]
 pub struct Position {
-  human: HumanPosition,
+  pub human: HumanPosition,
   machine: usize,
 }
 
@@ -43,7 +43,7 @@ pub struct Token {
   pub position: Position,
 }
 
-impl std::fmt::Display for Token {
+impl std::fmt::Debug for Token {
   // convert token to string for debugging
   fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
     write!(
@@ -56,11 +56,11 @@ impl std::fmt::Display for Token {
 
 impl Token {
   // instantiate a token
-  pub fn new(kind: TokenKind, value: &dyn std::string::ToString, pos: Position) -> Token {
+  pub fn new(kind: TokenKind, value: &dyn std::string::ToString, position: Position) -> Token {
     Token {
-      kind: kind,
+      kind,
       value: value.to_string(),
-      position: pos,
+      position,
     }
   }
 }
@@ -88,19 +88,19 @@ impl Lexer {
   }
 
   // method to call for lexing errors
-  fn error(&self, msg: &str) -> ! {
+  fn error(&self, msg: String) -> ! {
     panic!("{}", msg)
   }
 
   // advance the lexer
-  fn advance(&self) {
-    self.position.machine += 1;
-    self.position.human.column += 1;
+  fn advance(&mut self) {
     if self.position.machine > self.input.len() {
       self.current_char = None; // Indicates end of input
     } else {
       self.current_char = self.input[self.position.machine..].chars().next();
     }
+    self.position.machine += 1;
+    self.position.human.column += 1;
   }
 
   // peek at the next character without advancing
@@ -114,7 +114,7 @@ impl Lexer {
   }
 
   // peek at the next token without advancing
-  fn peek_token(&self) -> Token {
+  fn peek_token(&mut self) -> Token {
     let position = self.position.clone();
     let token = self.get_next_token();
     self.position = position;
@@ -122,7 +122,7 @@ impl Lexer {
   }
 
   // advance until the token in not a whitespace character
-  fn skip_whitespace(&self) {
+  fn skip_whitespace(&mut self) {
     while self.current_char.is_some() && self.current_char.unwrap().is_whitespace() {
       if self.current_char.unwrap() == '\n' {
         self.position.human.line += 1;
@@ -133,15 +133,15 @@ impl Lexer {
   }
 
   // skip until the and of the line (used for comments)
-  fn skip_comment(&self) {
+  fn skip_comment(&mut self) {
     while self.current_char.is_some() && self.current_char.unwrap() != '\n' {
       self.advance();
     }
   }
 
   // get a number and advance to the end of it
-  fn number(&self) -> String {
-    let result = String::new();
+  fn number(&mut self) -> String {
+    let mut result = String::new();
     while self.current_char.is_some() && self.current_char.unwrap().is_digit(10) {
       result += &self.current_char.unwrap().to_string();
       self.advance();
@@ -157,8 +157,17 @@ impl Lexer {
     result
   }
 
+  fn identifier(&mut self) -> String {
+    let mut result = String::new();
+    while self.current_char.unwrap().is_alphabetic() {
+      result += &self.current_char.unwrap().to_string();
+      self.advance();
+    }
+    result
+  }
+
   // get the next token (the main method)
-  fn get_next_token(&self) -> Token {
+  pub fn get_next_token(&mut self) -> Token {
     while self.current_char.is_some() {
       // skip comments
       if self.current_char.unwrap() == '#' {
@@ -181,7 +190,7 @@ impl Lexer {
           Position {
             human: HumanPosition {
               line: self.position.human.line,
-              column: self.position.human.column - number.to_string().len(),
+              column: self.position.human.column - number.len(),
             },
             machine: self.position.machine,
           },
@@ -189,7 +198,7 @@ impl Lexer {
       }
 
       // get a variable
-      if self.current_char.unwrap().is_alphabetic() {
+      if self.current_char.unwrap().is_alphabetic() && !self.peek().unwrap().is_alphabetic() {
         let token = Token::new(
           TokenKind::Variable,
           &self.current_char.unwrap(),
@@ -205,58 +214,86 @@ impl Lexer {
         return token;
       }
 
+      // get a command
+      if self.current_char.unwrap() == '@' {
+        self.advance();
+        return Token::new(TokenKind::Command, &'@', self.position.clone());
+      }
+
+      // get a identifier
+      if self.input[self.position.machine - 2..]
+        .chars()
+        .next()
+        .unwrap_or(' ')
+        == '@'
+        && self.current_char.unwrap().is_alphabetic()
+      {
+        let identifier = self.identifier();
+        return Token::new(
+          TokenKind::Identifier,
+          &identifier,
+          Position {
+            human: HumanPosition {
+              line: self.position.human.line,
+              column: self.position.human.column - identifier.len(),
+            },
+            machine: self.position.machine,
+          },
+        );
+      }
+
       // get an assignment
       if self.current_char.unwrap() == '=' {
         self.advance();
-        return Token::new(TokenKind::Assign, &'=', self.position);
+        return Token::new(TokenKind::Assign, &'=', self.position.clone());
       }
 
       // get a semicolon
       if self.current_char.unwrap() == ';' {
         self.advance();
-        return Token::new(TokenKind::Semicolon, &';', self.position);
+        return Token::new(TokenKind::Semicolon, &';', self.position.clone());
       }
 
       // get a comma
       if self.current_char.unwrap() == ',' {
         self.advance();
-        return Token::new(TokenKind::Comma, &',', self.position);
+        return Token::new(TokenKind::Comma, &',', self.position.clone());
       }
 
       // get a plus
       if self.current_char.unwrap() == '+' {
         self.advance();
-        return Token::new(TokenKind::Add, &'+', self.position);
+        return Token::new(TokenKind::Add, &'+', self.position.clone());
       }
 
       // get a minus
       if self.current_char.unwrap() == '-' {
         self.advance();
-        return Token::new(TokenKind::Subtract, &'-', self.position);
+        return Token::new(TokenKind::Subtract, &'-', self.position.clone());
       }
 
       // get a multiply
       if self.current_char.unwrap() == '*' {
         self.advance();
-        return Token::new(TokenKind::Multiply, &'*', self.position);
+        return Token::new(TokenKind::Multiply, &'*', self.position.clone());
       }
 
       // get a divide
       if self.current_char.unwrap() == '/' {
         self.advance();
-        return Token::new(TokenKind::Divide, &'/', self.position);
+        return Token::new(TokenKind::Divide, &'/', self.position.clone());
       }
 
       // get a left parenthesis
       if self.current_char.unwrap() == '(' {
         self.advance();
-        return Token::new(TokenKind::LeftParen, &'(', self.position);
+        return Token::new(TokenKind::LeftParen, &'(', self.position.clone());
       }
 
       // get a right parenthesis
       if self.current_char.unwrap() == ')' {
         self.advance();
-        return Token::new(TokenKind::RightParen, &')', self.position);
+        return Token::new(TokenKind::RightParen, &')', self.position.clone());
       }
 
       // if none of the above, panic
@@ -268,6 +305,6 @@ impl Lexer {
       ));
     }
 
-    return Token::new(TokenKind::EOF, &"EOF", self.position);
+    Token::new(TokenKind::EOF, &"EOF", self.position.clone())
   }
 }
