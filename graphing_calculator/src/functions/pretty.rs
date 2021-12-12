@@ -13,7 +13,7 @@ pub fn pretty(ast: AST) -> String {
         out.push_str(match e.sign {
           Sign::Add => "+",
           Sign::Sub => "-",
-          Sign::AddSub => "+-",
+          Sign::AddSub => "±",
           Sign::Mul => "*",
           Sign::Div => "/",
           Sign::Pow => "^",
@@ -31,7 +31,7 @@ pub fn pretty(ast: AST) -> String {
         out.push_str(match t.sign {
           Sign::Add => "+",
           Sign::Sub => "-",
-          Sign::AddSub => "+-",
+          Sign::AddSub => "±",
           Sign::Mul => "*",
           Sign::Div => "/",
           Sign::Pow => "^",
@@ -48,7 +48,7 @@ pub fn pretty(ast: AST) -> String {
       out.push_str(match i.sign {
         Sign::Add => "+",
         Sign::Sub => "-",
-        Sign::AddSub => "+-",
+        Sign::AddSub => "±",
         Sign::Mul => "*",
         Sign::Div => "/",
         Sign::Pow => "^",
@@ -62,7 +62,7 @@ pub fn pretty(ast: AST) -> String {
       out.push_str(match u.sign {
         Sign::Add => "+",
         Sign::Sub => "-",
-        Sign::AddSub => "+-",
+        Sign::AddSub => "±",
         Sign::Mul => "*",
         Sign::Div => "/",
         Sign::Pow => "^",
