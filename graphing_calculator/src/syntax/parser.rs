@@ -9,6 +9,7 @@ pub enum AST {
   Variable(String),
   Number(f64),
   Call(Call),
+  Identity(Identity),
   // temp
   None,
 }
@@ -99,42 +100,39 @@ impl Parser {
     }
   }
 
-  fn factor(&mut self) -> Box<AST> {
+  fn factor(&mut self, indexable: bool) -> Box<AST> {
     let token = self.current_token.clone();
-    if token.kind == TokenKind::Add {
+    if indexable && self.lexer.peek_token().kind == TokenKind::Power {
+      let x = self.factor(false);
+      self.eat(TokenKind::Power);
+      return Box::new(AST::Index(Index {
+        sign: Sign::Pow,
+        index: (x, self.factor(true)),
+      }));
+    } else if token.kind == TokenKind::Add {
       self.eat(TokenKind::Add);
       return Box::new(AST::Unary(Unary {
         sign: Sign::Add,
-        unary: self.factor(),
+        unary: self.factor(true),
       }));
     } else if token.kind == TokenKind::Subtract {
       self.eat(TokenKind::Subtract);
       return Box::new(AST::Unary(Unary {
         sign: Sign::Sub,
-        unary: self.factor(),
+        unary: self.factor(true),
+      }));
+    } else if token.kind == TokenKind::AddSubtract {
+      self.eat(TokenKind::AddSubtract);
+      return Box::new(AST::Unary(Unary {
+        sign: Sign::AddSub,
+        unary: self.factor(true),
       }));
     } else if token.kind == TokenKind::Number {
       self.eat(TokenKind::Number);
       return Box::new(AST::Number(token.value.parse().unwrap()));
     } else if token.kind == TokenKind::Identifier {
       self.eat(TokenKind::Identifier);
-      if self.current_token.kind == TokenKind::LeftParen {
-        self.eat(TokenKind::LeftParen);
-        let mut call = Vec::new();
-        while self.current_token.kind != TokenKind::RightParen {
-          call.push(self.expr());
-          if self.current_token.kind == TokenKind::Comma {
-            self.eat(TokenKind::Comma);
-          }
-        }
-        self.eat(TokenKind::RightParen);
-        return Box::new(AST::Call(Call {
-          name: token.value.clone(),
-          call,
-        }));
-      } else {
-        return Box::new(AST::Variable(token.value));
-      }
+      return Box::new(AST::Variable(token.value));
     } else if token.kind == TokenKind::LeftParen {
       self.eat(TokenKind::LeftParen);
       let node = self.expr();
@@ -152,7 +150,7 @@ impl Parser {
   }
 
   fn term(&mut self) -> Box<AST> {
-    let mut node = self.factor();
+    let mut node = self.factor(true);
 
     while [
       TokenKind::Multiply,
@@ -180,7 +178,7 @@ impl Parser {
       node = match *node {
         AST::Term(n) => {
           let mut n = n.clone();
-          n.term.push(self.factor());
+          n.term.push(self.factor(true));
           Box::new(AST::Term(n))
         }
         _ => Box::new(AST::Term(Term {
@@ -191,7 +189,7 @@ impl Parser {
               self.error(format!("SyntaxError: Unexpected {:?}", token.kind));
             }
           },
-          term: vec![node, self.factor()],
+          term: vec![node, self.factor(true)],
         })),
       }
     }
@@ -200,11 +198,51 @@ impl Parser {
   }
 
   fn expr(&mut self) -> Box<AST> {
-    Box::new(AST::None)
+    let mut node = self.term();
+
+    while [TokenKind::Add, TokenKind::Subtract, TokenKind::AddSubtract]
+      .contains(&self.current_token.kind)
+    {
+      let token = self.current_token.clone();
+      if token.kind == TokenKind::Add {
+        self.eat(TokenKind::Add);
+      } else if token.kind == TokenKind::Subtract {
+        self.eat(TokenKind::Subtract);
+      } else if token.kind == TokenKind::AddSubtract {
+        self.eat(TokenKind::AddSubtract);
+      }
+      node = match *node {
+        AST::Term(n) => {
+          let mut n = n.clone();
+          n.term.push(self.term());
+          Box::new(AST::Term(n))
+        }
+        _ => Box::new(AST::Term(Term {
+          sign: match token.kind {
+            TokenKind::Add => Sign::Add,
+            TokenKind::Subtract => Sign::Sub,
+            TokenKind::AddSubtract => Sign::AddSub,
+            _ => {
+              self.error(format!("SyntaxError: Unexpected {:?}", token.kind));
+            }
+          },
+          term: vec![node, self.term()],
+        })),
+      }
+    }
+
+    node
   }
 
   fn identity(&mut self) -> Box<AST> {
-    Box::new(AST::None)
+    let mut identity = Identity {
+      identity: vec![self.expr()],
+    };
+    while self.current_token.kind == TokenKind::Equals {
+      self.eat(TokenKind::Equals);
+      identity.identity.push(self.expr());
+    }
+    Box::new(AST::Identity(identity))
   }
 
   fn statement(&mut self) -> Box<AST> {

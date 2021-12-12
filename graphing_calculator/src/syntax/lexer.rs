@@ -9,7 +9,7 @@ pub enum TokenKind {
   Divide,
   Multiply,
   Power,
-  Assign,
+  Equals,
   Comma,
   Semicolon,
   Command,
@@ -121,14 +121,13 @@ impl Lexer {
     }
   }
 
-  // dead code
   // peek at the next token without advancing
-  // fn peek_token(&mut self) -> Token {
-  //   let position = self.position.clone();
-  //   let token = self.get_next_token();
-  //   self.position = position;
-  //   token
-  // }
+  pub fn peek_token(&mut self) -> Token {
+    let position = self.position.clone();
+    let token = self.get_next_token();
+    self.position = position;
+    token
+  }
 
   // advance until the token in not a whitespace character
   fn skip_whitespace(&mut self) {
@@ -231,7 +230,7 @@ impl Lexer {
       // get an assignment
       if self.current_char.unwrap() == '=' {
         self.advance();
-        return Token::new(TokenKind::Assign, &'=', self.position.clone());
+        return Token::new(TokenKind::Equals, &'=', self.position.clone());
       }
 
       // get a semicolon
