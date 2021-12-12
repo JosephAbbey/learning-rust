@@ -121,13 +121,14 @@ impl Lexer {
     }
   }
 
+  // dead code
   // peek at the next token without advancing
-  pub fn peek_token(&mut self) -> Token {
-    let position = self.position.clone();
-    let token = self.get_next_token();
-    self.position = position;
-    token
-  }
+  // fn peek_token(&mut self) -> Token {
+  //   let position = self.position.clone();
+  //   let token = self.get_next_token();
+  //   self.position = position;
+  //   token
+  // }
 
   // advance until the token in not a whitespace character
   fn skip_whitespace(&mut self) {

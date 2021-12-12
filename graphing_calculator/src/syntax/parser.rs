@@ -1,6 +1,6 @@
 use super::lexer::{Lexer, Token, TokenKind};
 
-#[derive(Debug, Clone)]
+#[derive(Clone, PartialEq)]
 pub enum AST {
   Expr(Expr),
   Term(Term),
@@ -8,13 +8,29 @@ pub enum AST {
   Unary(Unary),
   Variable(String),
   Number(f64),
-  // Call(Call),
+  Call(Call),
   Identity(Identity),
   Statement(Statement),
 }
 
-#[derive(Debug, Clone)]
-enum Sign {
+impl std::fmt::Debug for AST {
+  fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    match self {
+      AST::Expr(expr) => write!(f, "{:#?}", expr),
+      AST::Term(term) => write!(f, "{:#?}", term),
+      AST::Index(index) => write!(f, "{:#?}", index),
+      AST::Unary(unary) => write!(f, "{:#?}", unary),
+      AST::Variable(variable) => write!(f, "{:#?}", variable),
+      AST::Number(number) => write!(f, "{:#?}", number),
+      AST::Call(call) => write!(f, "{:#?}", call),
+      AST::Identity(identity) => write!(f, "{:#?}", identity),
+      AST::Statement(statement) => write!(f, "{:#?}", statement),
+    }
+  }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum Sign {
   Add,
   Sub,
   AddSub,
@@ -23,45 +39,45 @@ enum Sign {
   Pow,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Expr {
-  sign: Sign,
-  expr: Vec<Box<AST>>,
+  pub sign: Sign,
+  pub expr: Vec<Box<AST>>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Term {
-  sign: Sign,
-  term: Vec<Box<AST>>,
+  pub sign: Sign,
+  pub term: Vec<Box<AST>>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Index {
-  sign: Sign,
-  index: (Box<AST>, Box<AST>),
+  pub sign: Sign,
+  pub index: (Box<AST>, Box<AST>),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Unary {
-  sign: Sign,
-  unary: Box<AST>,
+  pub sign: Sign,
+  pub unary: Box<AST>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Call {
-  name: String,
-  call: Vec<Box<AST>>,
+  pub name: String,
+  pub call: Vec<Box<AST>>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Identity {
-  identity: Vec<Box<AST>>,
+  pub identity: Vec<Box<AST>>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Statement {
-  identity: Box<AST>,
-  command: Option<String>,
+  pub statement: Box<AST>,
+  pub command: Option<String>,
 }
 
 pub struct Parser {
@@ -99,57 +115,59 @@ impl Parser {
     }
   }
 
-  fn factor(&mut self, indexable: bool) -> Box<AST> {
+  fn factor(&mut self) -> Box<AST> {
     let token = self.current_token.clone();
-    if indexable && self.lexer.peek_token().kind == TokenKind::Power {
-      let x = self.factor(false);
-      self.eat(TokenKind::Power);
-      return Box::new(AST::Index(Index {
-        sign: Sign::Pow,
-        index: (x, self.factor(true)),
-      }));
-    } else if token.kind == TokenKind::Add {
+    let mut node: Box<AST>;
+    if token.kind == TokenKind::Add {
       self.eat(TokenKind::Add);
-      return Box::new(AST::Unary(Unary {
+      node = Box::new(AST::Unary(Unary {
         sign: Sign::Add,
-        unary: self.factor(true),
+        unary: self.factor(),
       }));
     } else if token.kind == TokenKind::Subtract {
       self.eat(TokenKind::Subtract);
-      return Box::new(AST::Unary(Unary {
+      node = Box::new(AST::Unary(Unary {
         sign: Sign::Sub,
-        unary: self.factor(true),
+        unary: self.factor(),
       }));
     } else if token.kind == TokenKind::AddSubtract {
       self.eat(TokenKind::AddSubtract);
-      return Box::new(AST::Unary(Unary {
+      node = Box::new(AST::Unary(Unary {
         sign: Sign::AddSub,
-        unary: self.factor(true),
+        unary: self.factor(),
       }));
     } else if token.kind == TokenKind::Number {
       self.eat(TokenKind::Number);
-      return Box::new(AST::Number(token.value.parse().unwrap()));
+      node = Box::new(AST::Number(token.value.parse().unwrap()));
     } else if token.kind == TokenKind::Identifier {
       self.eat(TokenKind::Identifier);
-      return Box::new(AST::Variable(token.value));
+      node = Box::new(AST::Variable(token.value));
     } else if token.kind == TokenKind::LeftParen {
       self.eat(TokenKind::LeftParen);
-      let node = self.expr();
+      node = self.expr();
       self.eat(TokenKind::RightParen);
-      return node;
+    } else {
+      self.error(format!(
+        "SyntaxError: Unexpected {:?}: '{}' at position {}:{}",
+        self.current_token.kind.clone(),
+        self.current_token.value.clone(),
+        self.current_token.position.human.line.clone(),
+        self.current_token.position.human.column.clone(),
+      ));
     }
-    println!("{:?}", token);
-    self.error(format!(
-      "SyntaxError: Unexpected {:?}: '{}' at position {}:{}",
-      self.current_token.kind.clone(),
-      self.current_token.value.clone(),
-      self.current_token.position.human.line.clone(),
-      self.current_token.position.human.column.clone(),
-    ));
+    if self.current_token.kind == TokenKind::Power {
+      self.eat(TokenKind::Power);
+      node = Box::new(AST::Index(Index {
+        sign: Sign::Pow,
+        index: (node, self.factor()),
+      }));
+    }
+
+    node
   }
 
   fn term(&mut self) -> Box<AST> {
-    let mut node = self.factor(true);
+    let mut node = self.factor();
 
     while [
       TokenKind::Multiply,
@@ -177,7 +195,7 @@ impl Parser {
       node = match *node {
         AST::Term(n) => {
           let mut n = n.clone();
-          n.term.push(self.factor(true));
+          n.term.push(self.factor());
           Box::new(AST::Term(n))
         }
         _ => Box::new(AST::Term(Term {
@@ -188,7 +206,7 @@ impl Parser {
               self.error(format!("SyntaxError: Unexpected {:?}", token.kind));
             }
           },
-          term: vec![node, self.factor(true)],
+          term: vec![node, self.factor()],
         })),
       }
     }
@@ -237,6 +255,8 @@ impl Parser {
     let mut identity = Identity {
       identity: vec![self.expr()],
     };
+    self.eat(TokenKind::Equals);
+    identity.identity.push(self.expr());
     while self.current_token.kind == TokenKind::Equals {
       self.eat(TokenKind::Equals);
       identity.identity.push(self.expr());
@@ -253,7 +273,10 @@ impl Parser {
       command = Some(self.current_token.value.clone());
       self.eat(TokenKind::Identifier);
     }
-    Box::new(AST::Statement(Statement { command, identity }))
+    Box::new(AST::Statement(Statement {
+      command,
+      statement: identity,
+    }))
   }
 
   fn statements(&mut self) -> Vec<Box<AST>> {
