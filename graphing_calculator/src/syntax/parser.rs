@@ -8,10 +8,9 @@ pub enum AST {
   Unary(Unary),
   Variable(String),
   Number(f64),
-  Call(Call),
+  // Call(Call),
   Identity(Identity),
-  // temp
-  None,
+  Statement(Statement),
 }
 
 #[derive(Debug, Clone)]
@@ -25,44 +24,44 @@ enum Sign {
 }
 
 #[derive(Debug, Clone)]
-struct Expr {
+pub struct Expr {
   sign: Sign,
   expr: Vec<Box<AST>>,
 }
 
 #[derive(Debug, Clone)]
-struct Term {
+pub struct Term {
   sign: Sign,
   term: Vec<Box<AST>>,
 }
 
 #[derive(Debug, Clone)]
-struct Index {
+pub struct Index {
   sign: Sign,
   index: (Box<AST>, Box<AST>),
 }
 
 #[derive(Debug, Clone)]
-struct Unary {
+pub struct Unary {
   sign: Sign,
   unary: Box<AST>,
 }
 
 #[derive(Debug, Clone)]
-struct Call {
+pub struct Call {
   name: String,
   call: Vec<Box<AST>>,
 }
 
 #[derive(Debug, Clone)]
-struct Identity {
+pub struct Identity {
   identity: Vec<Box<AST>>,
 }
 
 #[derive(Debug, Clone)]
-struct Statement {
+pub struct Statement {
   identity: Box<AST>,
-  command: String,
+  command: Option<String>,
 }
 
 pub struct Parser {
@@ -212,12 +211,12 @@ impl Parser {
         self.eat(TokenKind::AddSubtract);
       }
       node = match *node {
-        AST::Term(n) => {
+        AST::Expr(n) => {
           let mut n = n.clone();
-          n.term.push(self.term());
-          Box::new(AST::Term(n))
+          n.expr.push(self.term());
+          Box::new(AST::Expr(n))
         }
-        _ => Box::new(AST::Term(Term {
+        _ => Box::new(AST::Expr(Expr {
           sign: match token.kind {
             TokenKind::Add => Sign::Add,
             TokenKind::Subtract => Sign::Sub,
@@ -226,7 +225,7 @@ impl Parser {
               self.error(format!("SyntaxError: Unexpected {:?}", token.kind));
             }
           },
-          term: vec![node, self.term()],
+          expr: vec![node, self.term()],
         })),
       }
     }
@@ -246,11 +245,23 @@ impl Parser {
   }
 
   fn statement(&mut self) -> Box<AST> {
-    Box::new(AST::None)
+    let identity = self.identity();
+    self.eat(TokenKind::Semicolon);
+    let mut command: Option<String> = None;
+    if self.current_token.kind == TokenKind::Command {
+      self.eat(TokenKind::Command);
+      command = Some(self.current_token.value.clone());
+      self.eat(TokenKind::Identifier);
+    }
+    Box::new(AST::Statement(Statement { command, identity }))
   }
 
   fn statements(&mut self) -> Vec<Box<AST>> {
-    vec![]
+    let mut statements = Vec::new();
+    while self.current_token.kind != TokenKind::EOF {
+      statements.push(self.statement());
+    }
+    statements
   }
 
   pub fn parse(&mut self) -> Vec<Box<AST>> {
