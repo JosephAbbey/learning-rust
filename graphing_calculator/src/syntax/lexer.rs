@@ -5,8 +5,10 @@ pub enum TokenKind {
   RightParen,
   Subtract,
   Add,
+  AddSubtract,
   Divide,
   Multiply,
+  Power,
   Assign,
   Comma,
   Semicolon,
@@ -15,7 +17,6 @@ pub enum TokenKind {
   // Literals.
   Identifier,
   Number,
-  Variable,
 
   // Extras.
   EOF,
@@ -32,7 +33,7 @@ pub struct HumanPosition {
 #[derive(PartialEq, Debug, Clone)]
 pub struct Position {
   pub human: HumanPosition,
-  machine: usize,
+  pub machine: usize,
 }
 
 // struct to hold a token
@@ -62,6 +63,13 @@ impl Token {
       value: value.to_string(),
       position,
     }
+  }
+}
+
+impl std::cmp::PartialEq for Token {
+  // compare two tokens
+  fn eq(&self, other: &Token) -> bool {
+    self.kind == other.kind && self.value == other.value
   }
 }
 
@@ -113,13 +121,14 @@ impl Lexer {
     }
   }
 
+  // dead code
   // peek at the next token without advancing
-  fn peek_token(&mut self) -> Token {
-    let position = self.position.clone();
-    let token = self.get_next_token();
-    self.position = position;
-    token
-  }
+  // fn peek_token(&mut self) -> Token {
+  //   let position = self.position.clone();
+  //   let token = self.get_next_token();
+  //   self.position = position;
+  //   token
+  // }
 
   // advance until the token in not a whitespace character
   fn skip_whitespace(&mut self) {
@@ -132,7 +141,7 @@ impl Lexer {
     }
   }
 
-  // skip until the and of the line (used for comments)
+  // skip until the end of the line (used for comments)
   fn skip_comment(&mut self) {
     while self.current_char.is_some() && self.current_char.unwrap() != '\n' {
       self.advance();
@@ -197,37 +206,14 @@ impl Lexer {
         );
       }
 
-      // get a variable
-      if self.current_char.unwrap().is_alphabetic() && !self.peek().unwrap().is_alphabetic() {
-        let token = Token::new(
-          TokenKind::Variable,
-          &self.current_char.unwrap(),
-          Position {
-            human: HumanPosition {
-              line: self.position.human.line,
-              column: self.position.human.column,
-            },
-            machine: self.position.machine,
-          },
-        );
-        self.advance();
-        return token;
-      }
-
       // get a command
       if self.current_char.unwrap() == '@' {
         self.advance();
         return Token::new(TokenKind::Command, &'@', self.position.clone());
       }
 
-      // get a identifier
-      if self.input[self.position.machine - 2..]
-        .chars()
-        .next()
-        .unwrap_or(' ')
-        == '@'
-        && self.current_char.unwrap().is_alphabetic()
-      {
+      // get an identifier
+      if self.current_char.unwrap().is_alphabetic() {
         let identifier = self.identifier();
         return Token::new(
           TokenKind::Identifier,
@@ -260,6 +246,14 @@ impl Lexer {
         return Token::new(TokenKind::Comma, &',', self.position.clone());
       }
 
+      // get a plus-minus
+      if self.current_char.unwrap() == '+' && self.peek().unwrap() == '-' {
+        self.advance();
+        let pos = self.position.clone();
+        self.advance();
+        return Token::new(TokenKind::AddSubtract, &"+-", pos);
+      }
+
       // get a plus
       if self.current_char.unwrap() == '+' {
         self.advance();
@@ -276,6 +270,12 @@ impl Lexer {
       if self.current_char.unwrap() == '*' {
         self.advance();
         return Token::new(TokenKind::Multiply, &'*', self.position.clone());
+      }
+
+      // get a power
+      if self.current_char.unwrap() == '^' {
+        self.advance();
+        return Token::new(TokenKind::Power, &'^', self.position.clone());
       }
 
       // get a divide

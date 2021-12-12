@@ -1,148 +1,67 @@
 use super::lexer::{Lexer, Token, TokenKind};
 
-pub trait AST {
-  fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result;
+#[derive(Debug, Clone)]
+pub enum AST {
+  Expr(Expr),
+  Term(Term),
+  Index(Index),
+  Unary(Unary),
+  Variable(String),
+  Number(f64),
+  Call(Call),
+  // temp
+  None,
 }
 
-impl std::fmt::Debug for dyn AST {
-  fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-    self.fmt(f)
-  }
+#[derive(Debug, Clone)]
+enum Sign {
+  Add,
+  Sub,
+  AddSub,
+  Mul,
+  Div,
+  Pow,
 }
 
-struct BinOp {
-  token: Token,
-  left: Option<Box<dyn AST>>,
-  right: Option<Box<dyn AST>>,
+#[derive(Debug, Clone)]
+struct Expr {
+  sign: Sign,
+  expr: Vec<Box<AST>>,
 }
 
-impl BinOp {
-  pub fn new(left: Option<Box<dyn AST>>, token: Token, right: Option<Box<dyn AST>>) -> BinOp {
-    BinOp { left, token, right }
-  }
+#[derive(Debug, Clone)]
+struct Term {
+  sign: Sign,
+  term: Vec<Box<AST>>,
 }
 
-impl AST for BinOp {
-  fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-    write!(
-      f,
-      "({:#?} {} {:#?})",
-      self.left, self.token.value, self.right
-    )
-  }
+#[derive(Debug, Clone)]
+struct Index {
+  sign: Sign,
+  index: (Box<AST>, Box<AST>),
 }
 
-struct UnaryOp {
-  token: Token,
-  expr: Option<Box<dyn AST>>,
+#[derive(Debug, Clone)]
+struct Unary {
+  sign: Sign,
+  unary: Box<AST>,
 }
 
-impl UnaryOp {
-  pub fn new(token: Token, expr: Option<Box<dyn AST>>) -> UnaryOp {
-    UnaryOp { token, expr }
-  }
-}
-
-impl AST for UnaryOp {
-  fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-    write!(f, "({} {:#?})", self.token.value, self.expr)
-  }
-}
-
-struct Number {
-  token: Token,
-  value: f32,
-}
-
-impl Number {
-  pub fn new(token: Token) -> Number {
-    Number {
-      token: token.clone(),
-      value: token.value.parse::<f32>().unwrap(),
-    }
-  }
-}
-
-impl AST for Number {
-  fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-    write!(f, "({})", self.value)
-  }
-}
-
-struct Variable {
-  token: Token,
-  name: char,
-}
-
-impl Variable {
-  pub fn new(token: Token) -> Variable {
-    Variable {
-      token: token.clone(),
-      name: token.value.chars().next().unwrap(),
-    }
-  }
-}
-
-impl AST for Variable {
-  fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-    write!(f, "{}", self.name)
-  }
-}
-
-struct Command {
-  token: Token,
+#[derive(Debug, Clone)]
+struct Call {
   name: String,
+  call: Vec<Box<AST>>,
 }
 
-impl Command {
-  pub fn new(token: Token, name: String) -> Command {
-    Command { token, name }
-  }
+#[derive(Debug, Clone)]
+struct Identity {
+  identity: Vec<Box<AST>>,
 }
 
-impl AST for Command {
-  fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-    write!(f, "")
-  }
-}
-
-struct Assign {
-  token: Token,
-  left: Option<Box<dyn AST>>,
-  right: Option<Box<dyn AST>>,
-}
-
-impl Assign {
-  pub fn new(left: Option<Box<dyn AST>>, token: Token, right: Option<Box<dyn AST>>) -> Assign {
-    Assign { left, token, right }
-  }
-}
-
-impl AST for Assign {
-  fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-    write!(
-      f,
-      "({:#?} {} {:#?})",
-      self.left, self.token.value, self.right
-    )
-  }
-}
-
+#[derive(Debug, Clone)]
 struct Statement {
-  equation: Option<Box<dyn AST>>,
-  command: Option<Box<dyn AST>>,
-}
-
-impl Statement {
-  pub fn new<'a>(equation: Option<Box<dyn AST>>, command: Option<Box<dyn AST>>) -> Statement {
-    Statement { equation, command }
-  }
-}
-
-impl AST for Statement {
-  fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-    write!(f, "{:#?}", self.equation)
-  }
+  identity: Box<AST>,
+  command: String,
 }
 
 pub struct Parser {
@@ -150,7 +69,6 @@ pub struct Parser {
   current_token: Token,
 }
 
-// for every AST use 'a to stop lifetime mismatch
 impl Parser {
   pub fn new(input: String) -> Parser {
     let mut lexer = Lexer::new(input);
@@ -181,104 +99,123 @@ impl Parser {
     }
   }
 
-  fn factor(&mut self) -> Option<Box<dyn AST>> {
+  fn factor(&mut self) -> Box<AST> {
     let token = self.current_token.clone();
     if token.kind == TokenKind::Add {
       self.eat(TokenKind::Add);
-      return Some(Box::new(UnaryOp::new(token, self.factor())));
+      return Box::new(AST::Unary(Unary {
+        sign: Sign::Add,
+        unary: self.factor(),
+      }));
     } else if token.kind == TokenKind::Subtract {
       self.eat(TokenKind::Subtract);
-      return Some(Box::new(UnaryOp::new(token, self.factor())));
+      return Box::new(AST::Unary(Unary {
+        sign: Sign::Sub,
+        unary: self.factor(),
+      }));
     } else if token.kind == TokenKind::Number {
       self.eat(TokenKind::Number);
-      return Some(Box::new(Number::new(token)));
-    } else if token.kind == TokenKind::Variable {
-      self.eat(TokenKind::Variable);
-      return Some(Box::new(Variable::new(token)));
+      return Box::new(AST::Number(token.value.parse().unwrap()));
+    } else if token.kind == TokenKind::Identifier {
+      self.eat(TokenKind::Identifier);
+      if self.current_token.kind == TokenKind::LeftParen {
+        self.eat(TokenKind::LeftParen);
+        let mut call = Vec::new();
+        while self.current_token.kind != TokenKind::RightParen {
+          call.push(self.expr());
+          if self.current_token.kind == TokenKind::Comma {
+            self.eat(TokenKind::Comma);
+          }
+        }
+        self.eat(TokenKind::RightParen);
+        return Box::new(AST::Call(Call {
+          name: token.value.clone(),
+          call,
+        }));
+      } else {
+        return Box::new(AST::Variable(token.value));
+      }
     } else if token.kind == TokenKind::LeftParen {
       self.eat(TokenKind::LeftParen);
       let node = self.expr();
       self.eat(TokenKind::RightParen);
       return node;
     }
-    None
+    println!("{:?}", token);
+    self.error(format!(
+      "SyntaxError: Unexpected {:?}: '{}' at position {}:{}",
+      self.current_token.kind.clone(),
+      self.current_token.value.clone(),
+      self.current_token.position.human.line.clone(),
+      self.current_token.position.human.column.clone(),
+    ));
   }
 
-  fn term(&mut self) -> Option<Box<dyn AST>> {
+  fn term(&mut self) -> Box<AST> {
     let mut node = self.factor();
 
-    while [TokenKind::Multiply, TokenKind::Divide, TokenKind::Variable]
-      .contains(&self.current_token.kind)
+    while [
+      TokenKind::Multiply,
+      TokenKind::Divide,
+      TokenKind::LeftParen,
+      TokenKind::Identifier,
+      TokenKind::Number,
+    ]
+    .contains(&self.current_token.kind)
     {
       let mut token = self.current_token.clone();
       if token.kind == TokenKind::Multiply {
         self.eat(TokenKind::Multiply);
       } else if token.kind == TokenKind::Divide {
         self.eat(TokenKind::Divide);
-      } else if token.kind == TokenKind::Variable {
+      } else if [
+        TokenKind::LeftParen,
+        TokenKind::Identifier,
+        TokenKind::Number,
+      ]
+      .contains(&self.current_token.kind)
+      {
         token = Token::new(TokenKind::Multiply, &"", token.position.clone());
       }
-      node = Some(Box::new(BinOp::new(node, token, self.factor())));
-    }
-
-    node
-  }
-
-  fn expr(&mut self) -> Option<Box<dyn AST>> {
-    if self.current_token.kind == TokenKind::Semicolon {
-      return None;
-    }
-    let mut node = self.term();
-    while [TokenKind::Add, TokenKind::Subtract].contains(&self.current_token.kind) {
-      let token = self.current_token.clone();
-      if token.kind == TokenKind::Add {
-        self.eat(TokenKind::Add);
-      } else if token.kind == TokenKind::Subtract {
-        self.eat(TokenKind::Subtract);
+      node = match *node {
+        AST::Term(n) => {
+          let mut n = n.clone();
+          n.term.push(self.factor());
+          Box::new(AST::Term(n))
+        }
+        _ => Box::new(AST::Term(Term {
+          sign: match token.kind {
+            TokenKind::Multiply => Sign::Mul,
+            TokenKind::Divide => Sign::Div,
+            _ => {
+              self.error(format!("SyntaxError: Unexpected {:?}", token.kind));
+            }
+          },
+          term: vec![node, self.factor()],
+        })),
       }
-      node = Some(Box::new(BinOp::new(node, token, self.term())));
     }
 
     node
   }
 
-  fn command(&mut self) -> Option<Box<dyn AST>> {
-    let token = self.current_token.clone();
-    if token.kind == TokenKind::Command {
-      self.eat(TokenKind::Command);
-      let token_id = self.current_token.clone();
-      self.eat(TokenKind::Identifier);
-      return Some(Box::new(Command::new(
-        token.clone(),
-        token_id.value.to_string(),
-      )));
-    }
-    None
+  fn expr(&mut self) -> Box<AST> {
+    Box::new(AST::None)
   }
 
-  fn assign(&mut self) -> Option<Box<dyn AST>> {
-    let left = self.expr();
-    let token = self.current_token.clone();
-    self.eat(TokenKind::Assign);
-    let right = self.expr();
-    Some(Box::new(Assign::new(left, token, right)))
+  fn identity(&mut self) -> Box<AST> {
+    Box::new(AST::None)
   }
 
-  fn statement(&mut self) -> Option<Box<dyn AST>> {
-    let node = self.assign();
-    self.eat(TokenKind::Semicolon);
-    Some(Box::new(Statement::new(node, self.command())))
+  fn statement(&mut self) -> Box<AST> {
+    Box::new(AST::None)
   }
 
-  fn statements(&mut self) -> Vec<Option<Box<dyn AST>>> {
-    let mut statements = Vec::new();
-    while self.current_token.kind != TokenKind::EOF {
-      statements.push(self.statement());
-    }
-    statements
+  fn statements(&mut self) -> Vec<Box<AST>> {
+    vec![]
   }
 
-  pub fn parse(&mut self) -> Vec<Option<Box<dyn AST>>> {
+  pub fn parse(&mut self) -> Vec<Box<AST>> {
     self.statements()
   }
 }
