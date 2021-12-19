@@ -13,10 +13,9 @@ impl Quadratic {
   }
 
   pub fn from(ast: AST) -> Quadratic {
-    let mut quadratic = Quadratic::new(AST::Number(0f64), AST::Number(0f64), AST::Number(0f64));
-
     match ast {
       AST::Expr(expr) => {
+        let mut quadratic = Quadratic::new(AST::Number(0f64), AST::Number(0f64), AST::Number(0f64));
         for child in expr.expr {
           match *child {
             AST::Term(term) => {
@@ -92,15 +91,34 @@ impl Quadratic {
             }
           }
         }
+        quadratic
       }
       AST::Statement(statement) => match *statement.statement {
-        AST::Identity(identity) => return Quadratic::from(*identity.identity[0].clone()),
-        _ => {}
+        AST::Identity(identity) => Quadratic::one_side(
+          Quadratic::from(*identity.identity[0].clone()),
+          Quadratic::from(*identity.identity[1].clone()),
+        ),
+        _ => Quadratic::new(AST::Number(0f64), AST::Number(0f64), AST::Number(0f64)),
       },
       _ => panic!("Expected a expr"),
     }
+  }
 
-    quadratic
+  pub fn one_side(q1: Quadratic, q2: Quadratic) -> Quadratic {
+    return Quadratic::new(
+      AST::Expr(Expr {
+        sign: Sign::Sub,
+        expr: vec![Box::new(q1.a), Box::new(q2.a)],
+      }),
+      AST::Expr(Expr {
+        sign: Sign::Sub,
+        expr: vec![Box::new(q1.b), Box::new(q2.b)],
+      }),
+      AST::Expr(Expr {
+        sign: Sign::Sub,
+        expr: vec![Box::new(q1.c), Box::new(q2.c)],
+      }),
+    );
   }
 
   pub fn solve(&self) -> AST {
