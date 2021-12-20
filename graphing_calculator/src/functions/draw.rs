@@ -2,11 +2,15 @@ use super::{eval, pretty};
 use crate::syntax::parser::AST;
 use plotters::prelude::*;
 
-pub fn draw(file: &String, statement: Vec<AST>) -> Result<(), Box<dyn std::error::Error>> {
+pub fn draw(
+  file: &String,
+  statement: Vec<AST>,
+  title: &str,
+) -> Result<(), Box<dyn std::error::Error>> {
   let root = SVGBackend::new(file, (750, 750)).into_drawing_area();
   root.fill(&WHITE)?;
   let mut chart = ChartBuilder::on(&root)
-    .caption("y=x^2", ("Arial", 50).into_font())
+    .caption(title, ("Arial", 50).into_font())
     .margin(5)
     .x_label_area_size(30)
     .y_label_area_size(30)
@@ -14,20 +18,24 @@ pub fn draw(file: &String, statement: Vec<AST>) -> Result<(), Box<dyn std::error
 
   chart.configure_mesh().draw()?;
 
-  for s in statement {
-    match s {
-      AST::Identity(statement) => {
+  let colours: Vec<f64> = (0..statement.len())
+    .map(|v| v as f64 / statement.len() as f64)
+    .collect();
+  for i in 0..statement.len() {
+    match statement[i].clone() {
+      AST::Identity(identity) => {
+        let cs = colours.clone();
         chart
           .draw_series(LineSeries::new(
             {
               let mut po = Vec::<(f64, f64)>::new();
               let mut no = Vec::<(f64, f64)>::new();
               for x in (-200..=200).map(|x| x as f64 / 10.0) {
-                let a = eval(*statement.identity[1].clone(), x);
+                let a = eval(*identity.identity[1].clone(), x);
                 if !a[0].is_nan() {
                   po.push((x, a[0]));
                 }
-                if !a[1].is_nan() {
+                if a.len() > 1 && !a[1].is_nan() {
                   no.push((x, a[1]));
                 }
               }
@@ -35,10 +43,15 @@ pub fn draw(file: &String, statement: Vec<AST>) -> Result<(), Box<dyn std::error
               po.extend(no);
               po
             },
-            &RED,
+            HSLColor(colours[i], 1f64, 0.5f64),
           ))?
-          .label(pretty(AST::Identity(statement)))
-          .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], &RED));
+          .label(pretty(AST::Identity(identity)))
+          .legend(move |(x, y)| {
+            PathElement::new(
+              vec![(x, y), (x + 20, y)],
+              HSLColor(cs[i], 1f64, 0.5f64).filled(),
+            )
+          });
       }
       _ => {}
     }

@@ -26,5 +26,5 @@ fn main() {
             _ => {}
         }
     }
-    draw(&args[2].clone(), draws).expect("Failed to draw");
+    draw(&args[2].clone(), draws, &args[3].clone()).expect("Failed to draw.");
 }

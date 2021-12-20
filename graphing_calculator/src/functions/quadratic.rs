@@ -95,12 +95,24 @@ impl Quadratic {
       }
       AST::Statement(statement) => match *statement.statement {
         AST::Identity(identity) => Quadratic::one_side(
-          Quadratic::from(*identity.identity[0].clone()),
-          Quadratic::from(*identity.identity[1].clone()),
+          Quadratic::from(match *identity.identity[0].clone() {
+            AST::Expr(expr) => AST::Expr(expr),
+            _ => AST::Expr(Expr {
+              sign: Sign::Add,
+              expr: vec![identity.identity[0].clone()],
+            }),
+          }),
+          Quadratic::from(match *identity.identity[1].clone() {
+            AST::Expr(expr) => AST::Expr(expr),
+            _ => AST::Expr(Expr {
+              sign: Sign::Add,
+              expr: vec![identity.identity[1].clone()],
+            }),
+          }),
         ),
         _ => Quadratic::new(AST::Number(0f64), AST::Number(0f64), AST::Number(0f64)),
       },
-      _ => panic!("Expected a expr"),
+      _ => panic!("Expected a expr, got: {:?}", ast),
     }
   }
 
