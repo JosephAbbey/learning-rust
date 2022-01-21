@@ -1,10 +1,10 @@
-use super::{eval, pretty};
+use super::eval;
 use crate::syntax::parser::AST;
 use plotters::prelude::*;
 
 pub fn draw(
   file: &String,
-  statement: Vec<AST>,
+  statement: Vec<(AST, String)>,
   title: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
   let root = SVGBackend::new(file, (750, 750)).into_drawing_area();
@@ -22,7 +22,7 @@ pub fn draw(
     .map(|v| v as f64 / statement.len() as f64)
     .collect();
   for i in 0..statement.len() {
-    match statement[i].clone() {
+    match statement[i].0.clone() {
       AST::Identity(identity) => {
         let cs = colours.clone();
         chart
@@ -45,7 +45,7 @@ pub fn draw(
             },
             HSLColor(colours[i], 1f64, 0.5f64),
           ))?
-          .label(pretty(AST::Identity(identity)))
+          .label(statement[i].1.clone())
           .legend(move |(x, y)| {
             PathElement::new(
               vec![(x, y), (x + 20, y)],

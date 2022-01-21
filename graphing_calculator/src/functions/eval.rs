@@ -81,6 +81,55 @@ pub fn eval(expr: AST, x: f64) -> Vec<f64> {
         }
         o
       }
+      "sin" => {
+        let mut o = Vec::<f64>::new();
+        for n in eval(*c.call[0].clone(), x) {
+          o.push(f64::sin(n));
+        }
+        o
+      }
+      "cos" => {
+        let mut o = Vec::<f64>::new();
+        for n in eval(*c.call[0].clone(), x) {
+          o.push(f64::cos(n));
+        }
+        o
+      }
+      "tan" => {
+        let mut o = Vec::<f64>::new();
+        for n in eval(*c.call[0].clone(), x) {
+          o.push(f64::tan(n));
+        }
+        o
+      }
+      "asin" => {
+        let mut o = Vec::<f64>::new();
+        for n in eval(*c.call[0].clone(), x) {
+          o.push(f64::asin(n));
+        }
+        o
+      }
+      "acos" => {
+        let mut o = Vec::<f64>::new();
+        for n in eval(*c.call[0].clone(), x) {
+          o.push(f64::acos(n));
+        }
+        o
+      }
+      "atan" => {
+        let mut o = Vec::<f64>::new();
+        for n in eval(*c.call[0].clone(), x) {
+          o.push(f64::atan(n));
+        }
+        o
+      }
+      "ln" => {
+        let mut o = Vec::<f64>::new();
+        for n in eval(*c.call[0].clone(), x) {
+          o.push(f64::ln(n));
+        }
+        o
+      }
       _ => vec![0f64],
     },
   }
