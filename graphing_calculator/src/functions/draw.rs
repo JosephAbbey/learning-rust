@@ -8,7 +8,7 @@ pub fn draw(
   title: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
   let root = SVGBackend::new(file, (750, 750)).into_drawing_area();
-  root.fill(&WHITE)?;
+  root.fill(&RGBColor(102, 102, 102))?;
   let mut chart = ChartBuilder::on(&root)
     .caption(title, ("Arial", 50).into_font())
     .margin(5)

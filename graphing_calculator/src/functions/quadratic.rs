@@ -1,11 +1,11 @@
-use super::eval;
+use super::{eval, expand};
 use crate::syntax::parser::{Call, Expr, Identity, Index, Sign, Term, Unary, AST};
 
 #[derive(Debug, Clone)]
 pub struct Quadratic {
-  a: AST,
-  b: AST,
-  c: AST,
+  pub a: AST,
+  pub b: AST,
+  pub c: AST,
   var: String,
 }
 
@@ -81,6 +81,28 @@ impl Quadratic {
                     expr: vec![Box::new(quadratic.c), Box::new(AST::Term(term))],
                   });
                 }
+              }
+            }
+            AST::Variable(v) => {
+              if v != var.clone() {
+                if quadratic.c == AST::Number(0f64) {
+                  quadratic.c = AST::Variable(v).clone();
+                } else {
+                  quadratic.c = AST::Expr(Expr {
+                    sign: Sign::Add,
+                    expr: vec![Box::new(quadratic.c), Box::new(AST::Variable(v))],
+                  });
+                }
+              }
+            }
+            AST::Number(n) => {
+              if quadratic.c == AST::Number(0f64) {
+                quadratic.c = AST::Number(n).clone();
+              } else {
+                quadratic.c = AST::Expr(Expr {
+                  sign: Sign::Add,
+                  expr: vec![Box::new(quadratic.c), Box::new(AST::Number(n))],
+                });
               }
             }
             other => {
@@ -202,6 +224,13 @@ impl Quadratic {
               Box::new(self.b.clone()),
             ],
           })),
+        ],
+      })
+    } else if let AST::Number(_) = expand(self.c.clone()) {
+      AST::Identity(Identity {
+        identity: vec![
+          Box::new(AST::Variable(self.var.clone())),
+          Box::new(self.c.clone()),
         ],
       })
     } else if self.var == "y".to_string() {
