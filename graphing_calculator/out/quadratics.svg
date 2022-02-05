@@ -1,5 +1,5 @@
 <svg width="750" height="750" viewBox="0 0 750 750" xmlns="http://www.w3.org/2000/svg">
-<rect x="0" y="0" width="749" height="749" opacity="1" fill="#666666" stroke="none"/>
+<rect x="0" y="0" width="749" height="749" opacity="0.4" fill="#000000" stroke="none"/>
 <text x="375" y="10" dy="0.76em" text-anchor="middle" font-family="Arial" font-size="40.32258064516129" opacity="1" fill="#000000">
 quadratics
 </text>

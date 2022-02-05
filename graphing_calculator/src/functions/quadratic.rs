@@ -1,4 +1,4 @@
-use super::{eval, expand};
+use super::expand;
 use crate::syntax::parser::{Call, Expr, Identity, Index, Sign, Term, Unary, AST};
 
 #[derive(Debug, Clone)]
@@ -166,7 +166,7 @@ impl Quadratic {
   }
 
   pub fn solve(&self) -> AST {
-    if eval(self.a.clone(), 0f64)[0] != 0f64 {
+    if !matches!(expand(self.a.clone()), AST::Number(x) if x == 0f64) {
       AST::Identity(Identity {
         identity: vec![
           Box::new(AST::Variable(self.var.clone())),
@@ -210,7 +210,7 @@ impl Quadratic {
           })),
         ],
       })
-    } else if eval(self.b.clone(), 0f64)[0] != 0f64 {
+    } else if !matches!(expand(self.b.clone()), AST::Number(x) if x == 0f64) {
       AST::Identity(Identity {
         identity: vec![
           Box::new(AST::Variable(self.var.clone())),
@@ -226,7 +226,7 @@ impl Quadratic {
           })),
         ],
       })
-    } else if let AST::Number(_) = expand(self.c.clone()) {
+    } else if !matches!(expand(self.c.clone()), AST::Number(x) if x == 0f64) {
       AST::Identity(Identity {
         identity: vec![
           Box::new(AST::Variable(self.var.clone())),
@@ -234,19 +234,27 @@ impl Quadratic {
         ],
       })
     } else if self.var == "y".to_string() {
-      AST::Identity(Identity {
-        identity: vec![
-          Box::new(AST::Variable(self.var.clone())),
-          Box::new(Quadratic::from(self.c.clone(), "x".to_string()).solve()),
-        ],
-      })
+      Quadratic::from(
+        AST::Identity(Identity {
+          identity: vec![
+            Box::new(AST::Variable(self.var.clone())),
+            Box::new(self.c.clone()),
+          ],
+        }),
+        "x".to_string(),
+      )
+      .solve()
     } else {
-      AST::Identity(Identity {
-        identity: vec![
-          Box::new(AST::Variable(self.var.clone())),
-          Box::new(Quadratic::from(self.c.clone(), "y".to_string()).solve()),
-        ],
-      })
+      Quadratic::from(
+        AST::Identity(Identity {
+          identity: vec![
+            Box::new(AST::Variable(self.var.clone())),
+            Box::new(self.c.clone()),
+          ],
+        }),
+        "y".to_string(),
+      )
+      .solve()
     }
   }
 }

@@ -6,26 +6,38 @@ pub fn pretty(ast: AST) -> String {
     AST::Number(n) => out.push_str(&n.to_string()),
     AST::Variable(v) => out.push_str(&v.to_string()),
     AST::Expr(e) => {
-      out.push_str("(");
-      out.push_str(&pretty(*e.expr[0].clone()));
-      for i in 1..e.expr.len() {
-        out.push_str(" ");
-        out.push_str(match e.sign {
-          Sign::Add => "+",
-          Sign::Sub => "-",
-          Sign::AddSub => "±",
-          Sign::Mul => "*",
-          Sign::Div => "/",
-          Sign::Pow => "^",
-        });
-        out.push_str(" ");
-        out.push_str(&pretty(*e.expr[i].clone()));
+      if e.expr.len() != 0 {
+        out.push_str("(");
+        let f = &pretty(*e.expr[0].clone());
+        if f.len() == 0 {
+          out.push_str("0");
+        } else {
+          out.push_str(f);
+        }
+        for i in 1..e.expr.len() {
+          out.push_str(" ");
+          out.push_str(match e.sign {
+            Sign::Add => "+",
+            Sign::Sub => "-",
+            Sign::AddSub => "±",
+            Sign::Mul => "*",
+            Sign::Div => "/",
+            Sign::Pow => "^",
+          });
+          out.push_str(" ");
+          out.push_str(&pretty(*e.expr[i].clone()));
+        }
+        out.push_str(")");
       }
-      out.push_str(")");
     }
     AST::Term(t) => {
       out.push_str("(");
-      out.push_str(&pretty(*t.term[0].clone()));
+      let f = &pretty(*t.term[0].clone());
+      if f.len() == 0 {
+        out.push_str("0");
+      } else {
+        out.push_str(f);
+      }
       for i in 1..t.term.len() {
         out.push_str(" ");
         out.push_str(match t.sign {

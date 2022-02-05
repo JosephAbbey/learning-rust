@@ -20,6 +20,9 @@ pub fn eval(expr: AST, x: f64) -> Vec<f64> {
       o
     }
     AST::Expr(e) => {
+      if e.expr.len() == 0 {
+        return vec![0f64];
+      }
       let mut o = eval(*e.expr[0].clone(), x);
       for i in 1..e.expr.len() {
         let oc = o.clone();

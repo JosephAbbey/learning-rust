@@ -41,7 +41,9 @@ pub fn expand(ast: AST) -> AST {
       if n != 0f64 {
         o.splice(0..0, [Box::new(AST::Number(n))]);
       }
-      if o.len() == 1 {
+      if o.len() == 0 {
+        AST::Number(0f64)
+      } else if o.len() == 1 {
         *o.get(0).unwrap().clone()
       } else {
         AST::Expr(Expr {

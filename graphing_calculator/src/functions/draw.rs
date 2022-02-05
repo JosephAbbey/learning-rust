@@ -8,7 +8,7 @@ pub fn draw(
   title: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
   let root = SVGBackend::new(file, (750, 750)).into_drawing_area();
-  root.fill(&RGBColor(102, 102, 102))?;
+  root.fill(&BLACK.mix(0.4))?;
   let mut chart = ChartBuilder::on(&root)
     .caption(title, ("Arial", 50).into_font())
     .margin(5)
@@ -25,6 +25,7 @@ pub fn draw(
     match statement[i].0.clone() {
       AST::Identity(identity) => {
         let cs = colours.clone();
+        println!("{}", statement[i].1.clone());
         chart
           .draw_series(LineSeries::new(
             {
