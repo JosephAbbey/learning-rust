@@ -26,4 +26,4 @@ jobs:
         files: |
           graphing_calculator/target/debug/graphing_calculator.exe
           LICENSE
-        token: ${{ github.token }}
+        token: ${{ secrets.token }}
