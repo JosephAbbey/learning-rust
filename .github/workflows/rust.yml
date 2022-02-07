@@ -20,10 +20,16 @@ jobs:
       run: cd graphing_calculator; cargo build --verbose
     - name: Run tests
       run: cd graphing_calculator; cargo test --verbose
+#     - name: Release
+#       uses: softprops/action-gh-release@v1
+#       with:
+#         files: |
+#           graphing_calculator/target/debug/graphing_calculator.exe
+#           LICENSE
+#         token: ${{ secrets.token }}
     - name: Release
-      uses: softprops/action-gh-release@v1
-      with:
-        files: |
-          graphing_calculator/target/debug/graphing_calculator.exe
-          LICENSE
-        token: ${{ secrets.token }}
+      uses: fnkr/github-action-ghr@v1
+      env:
+        GHR_COMPRESS: zip
+        GHR_PATH: graphing_calculator/target/debug/
+        GITHUB_TOKEN: ${{ secrets.token }}
