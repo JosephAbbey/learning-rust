@@ -22,7 +22,7 @@ pub fn expand(ast: AST) -> AST {
           match j {
             AST::Number(x) => match e.sign {
               Sign::Add => *n += x,
-              Sign::Sub => *n += x,
+              Sign::Sub => *n -= x,
               Sign::AddSub => o.push(Box::new(j.clone())),
               _ => {}
             },

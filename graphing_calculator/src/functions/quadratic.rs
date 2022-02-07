@@ -48,13 +48,24 @@ impl Quadratic {
                     })
                     .unwrap(),
                 );
-                if quadratic.a == AST::Number(0f64) {
-                  quadratic.a = AST::Term(t);
+                if t.term.len() == 0 {
+                  if quadratic.a == AST::Number(0f64) {
+                    quadratic.a = AST::Number(1f64);
+                  } else {
+                    quadratic.a = AST::Expr(Expr {
+                      sign: Sign::Add,
+                      expr: vec![Box::new(quadratic.a), Box::new(AST::Number(1f64))],
+                    });
+                  }
                 } else {
-                  quadratic.a = AST::Expr(Expr {
-                    sign: Sign::Add,
-                    expr: vec![Box::new(quadratic.a), Box::new(AST::Term(t))],
-                  });
+                  if quadratic.a == AST::Number(0f64) {
+                    quadratic.a = AST::Term(t);
+                  } else {
+                    quadratic.a = AST::Expr(Expr {
+                      sign: Sign::Add,
+                      expr: vec![Box::new(quadratic.a), Box::new(AST::Term(t))],
+                    });
+                  }
                 }
               } else if term.term.contains(&Box::new(AST::Variable(var.clone()))) {
                 let mut t = term.clone();
@@ -64,13 +75,24 @@ impl Quadratic {
                     .position(|x| *x == Box::new(AST::Variable(var.clone())))
                     .unwrap(),
                 );
-                if quadratic.b == AST::Number(0f64) {
-                  quadratic.b = AST::Term(t);
+                if t.term.len() == 0 {
+                  if quadratic.b == AST::Number(0f64) {
+                    quadratic.b = AST::Number(1f64);
+                  } else {
+                    quadratic.b = AST::Expr(Expr {
+                      sign: Sign::Add,
+                      expr: vec![Box::new(quadratic.b), Box::new(AST::Number(1f64))],
+                    });
+                  }
                 } else {
-                  quadratic.b = AST::Expr(Expr {
-                    sign: Sign::Add,
-                    expr: vec![Box::new(quadratic.b), Box::new(AST::Term(t))],
-                  });
+                  if quadratic.b == AST::Number(0f64) {
+                    quadratic.b = AST::Term(t);
+                  } else {
+                    quadratic.b = AST::Expr(Expr {
+                      sign: Sign::Add,
+                      expr: vec![Box::new(quadratic.b), Box::new(AST::Term(t))],
+                    });
+                  }
                 }
               } else {
                 if quadratic.c == AST::Number(0f64) {
@@ -91,6 +113,15 @@ impl Quadratic {
                   quadratic.c = AST::Expr(Expr {
                     sign: Sign::Add,
                     expr: vec![Box::new(quadratic.c), Box::new(AST::Variable(v))],
+                  });
+                }
+              } else {
+                if quadratic.b == AST::Number(0f64) {
+                  quadratic.b = AST::Number(1f64);
+                } else {
+                  quadratic.b = AST::Expr(Expr {
+                    sign: Sign::Add,
+                    expr: vec![Box::new(quadratic.b), Box::new(AST::Number(1f64))],
                   });
                 }
               }
