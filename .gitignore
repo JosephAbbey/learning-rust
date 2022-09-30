@@ -18,3 +18,4 @@ bin/
 pkg/
 www/
 wasm-pack.log
+.ipynb_checkpoints/*
